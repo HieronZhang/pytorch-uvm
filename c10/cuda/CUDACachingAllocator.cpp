@@ -888,7 +888,7 @@ cudaError_t allocPrimitive(void** ptr, size_t size, AllocParams& p) {
     *ptr = active_pool->allocator()->raw_alloc(size);
     return *ptr ? cudaSuccess : cudaErrorMemoryAllocation;
   } else {
-    return C10_CUDA_ERROR_HANDLED(cudaMalloc(ptr, size));
+    return C10_CUDA_ERROR_HANDLED(cudaMallocManaged(ptr, size));
   }
 }
 
@@ -3279,7 +3279,7 @@ static void* uncached_allocate(size_t size) {
   void* devPtr = nullptr;
   // Deliberately don't use cudaMallocMaybeCapturing here, to force an error
   // if someone tries to use forceUncachedAllocator while capturing.
-  C10_CUDA_CHECK(cudaMalloc(&devPtr, size));
+  C10_CUDA_CHECK(cudaMallocManaged(&devPtr, size));
   const c10::impl::PyInterpreter* interp = c10::impl::GPUTrace::get_trace();
   if (C10_UNLIKELY(interp)) {
     (*interp)->trace_gpu_memory_allocation(
