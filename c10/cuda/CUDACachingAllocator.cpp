@@ -888,7 +888,16 @@ cudaError_t allocPrimitive(void** ptr, size_t size, AllocParams& p) {
     *ptr = active_pool->allocator()->raw_alloc(size);
     return *ptr ? cudaSuccess : cudaErrorMemoryAllocation;
   } else {
-    return C10_CUDA_ERROR_HANDLED(cudaMallocManaged(ptr, size));
+    cudaError_t err = C10_CUDA_ERROR_HANDLED(cudaMallocManaged(ptr, size));
+    
+    // Get current device ID
+    int device;
+    cudaGetDevice(&device);
+    
+    // Use device ID, not cudaMemLocation struct
+    cudaMemAdvise(*ptr, size, cudaMemAdviseSetAccessedBy, device);
+    cudaMemAdvise(*ptr, size, cudaMemAdviseSetPreferredLocation, device);
+    return err;
   }
 }
 
@@ -3280,6 +3289,13 @@ static void* uncached_allocate(size_t size) {
   // Deliberately don't use cudaMallocMaybeCapturing here, to force an error
   // if someone tries to use forceUncachedAllocator while capturing.
   C10_CUDA_CHECK(cudaMallocManaged(&devPtr, size));
+  // Get current device ID
+  int device;
+  cudaGetDevice(&device);
+  
+  // Use device ID, not cudaMemLocation struct
+  cudaMemAdvise(devPtr, size, cudaMemAdviseSetAccessedBy, device);
+  cudaMemAdvise(devPtr, size, cudaMemAdviseSetPreferredLocation, device);
   const c10::impl::PyInterpreter* interp = c10::impl::GPUTrace::get_trace();
   if (C10_UNLIKELY(interp)) {
     (*interp)->trace_gpu_memory_allocation(
