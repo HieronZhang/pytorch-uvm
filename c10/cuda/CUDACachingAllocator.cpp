@@ -888,7 +888,12 @@ cudaError_t allocPrimitive(void** ptr, size_t size, AllocParams& p) {
     *ptr = active_pool->allocator()->raw_alloc(size);
     return *ptr ? cudaSuccess : cudaErrorMemoryAllocation;
   } else {
-    cudaError_t err = C10_CUDA_ERROR_HANDLED(cudaMallocManaged(ptr, size));
+    // cudaError_t err = C10_CUDA_ERROR_HANDLED(cudaMallocManaged(ptr, size));
+    *ptr = malloc(size);
+    if (*ptr == nullptr) {
+      return cudaErrorMemoryAllocation;
+    }
+    cudaError_t err = cudaSuccess;
     
     // Get current device ID
     int device;
@@ -2957,7 +2962,8 @@ class DeviceCachingAllocator {
       // we use the given allocator's delete function.
       active_pool->allocator()->raw_delete((void*)block->ptr);
     } else {
-      C10_CUDA_CHECK(cudaFree((void*)block->ptr));
+      // C10_CUDA_CHECK(cudaFree((void*)block->ptr));
+      std::free((void*)(block->ptr));
     }
     total_allocated_memory -= block->size;
 
@@ -3288,7 +3294,8 @@ static void* uncached_allocate(size_t size) {
   void* devPtr = nullptr;
   // Deliberately don't use cudaMallocMaybeCapturing here, to force an error
   // if someone tries to use forceUncachedAllocator while capturing.
-  C10_CUDA_CHECK(cudaMallocManaged(&devPtr, size));
+  // C10_CUDA_CHECK(cudaMallocManaged(&devPtr, size));
+  devPtr = malloc(size);
   // Get current device ID
   int device;
   cudaGetDevice(&device);
@@ -3314,7 +3321,8 @@ static void uncached_delete(void* ptr) {
     (*interp)->trace_gpu_memory_deallocation(
         c10::kCUDA, reinterpret_cast<uintptr_t>(ptr));
   }
-  C10_CUDA_CHECK(cudaFree(ptr));
+  // C10_CUDA_CHECK(cudaFree(ptr));
+  free(ptr);
 }
 
 static void local_raw_delete(void* ptr);
