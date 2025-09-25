@@ -377,13 +377,14 @@ def trace(data):
             elif e["action"] == "segment_alloc":
                 addr, size = e["addr"], e["size"]
                 name = _name()
-                out.write(f"{name} = cudaMalloc({addr}, {Bytes(size)})\n")
+                # out.write(f"{name} = cudaMalloc({addr}, {Bytes(size)})\n")
+                out.write(f"*({addr}) = malloc({Bytes(size)})\n")
                 segment_intervals.append((name, addr, size))
                 segment_addr_to_name[addr] = name
             elif e["action"] == "segment_free":
                 addr, size = e["addr"], e["size"]
                 name = segment_addr_to_name.get(addr, addr)
-                out.write(f"cudaFree({name}) # {Bytes(size)}\n")
+                out.write(f"free({name}) # {Bytes(size)}\n")
                 if name in segment_addr_to_name:
                     free_names.append(name)
                     del segment_addr_to_name[name]

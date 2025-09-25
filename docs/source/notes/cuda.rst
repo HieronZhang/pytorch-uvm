@@ -592,14 +592,16 @@ traces all the memory operations.
    extern "C" {
    void* my_malloc(ssize_t size, int device, cudaStream_t stream) {
       void *ptr;
-      cudaMalloc(&ptr, size);
+      // cudaMalloc(&ptr, size);
+      ptr = malloc(size);
       std::cout<<"alloc "<<ptr<<size<<std::endl;
       return ptr;
    }
 
    void my_free(void* ptr, ssize_t size, int device, cudaStream_t stream) {
       std::cout<<"free "<<ptr<< " "<<stream<<std::endl;
-      cudaFree(ptr);
+      // cudaFree(ptr);
+        free(ptr);
    }
    }
 

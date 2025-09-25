@@ -89,7 +89,7 @@ bool env_flag_set(const char* env_var_name) {
 void uvm_deleter(DeviceAssertionsData* uvm_assertions_ptr) {
   // Ignore error in destructor
   if (uvm_assertions_ptr) {
-    C10_CUDA_IGNORE_ERROR(cudaFree(uvm_assertions_ptr));
+    free(uvm_assertions_ptr);
   }
 }
 

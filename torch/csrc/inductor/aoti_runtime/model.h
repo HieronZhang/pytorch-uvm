@@ -58,8 +58,12 @@ using RAIIDataPtr = std::unique_ptr<void, std::function<void(void*)>>;
 
 RAIIDataPtr RAII_gpuMalloc(size_t num_bytes) {
   void* data_ptr;
-  AOTI_RUNTIME_DEVICE_CHECK(cudaMalloc((void**)&data_ptr, num_bytes));
-  auto deleter = [](void* ptr) { AOTI_RUNTIME_DEVICE_CHECK(cudaFree(ptr)); };
+  // AOTI_RUNTIME_DEVICE_CHECK(cudaMalloc((void**)&data_ptr, num_bytes));
+  data_ptr = malloc(num_bytes);
+  if (num_bytes!=0 && !data_ptr) {
+    throw std::bad_alloc();
+  }
+  auto deleter = [](void* ptr) { free(ptr); };
   return RAIIDataPtr(data_ptr, deleter);
 }
 
